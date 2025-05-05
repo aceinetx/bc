@@ -34,5 +34,7 @@ bool AstVarAssign::compile(BC* bc) {
 
 	bc->builder.CreateStore(expr_value, var->value);
 
+	bc->values.push(expr_value);
+
 	return true;
 }

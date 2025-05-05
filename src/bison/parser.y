@@ -130,7 +130,7 @@ statement_list:
 
 statement:
 	declaration
-	| assignment
+	| assignment SEMICOLON
 	| return_statement
 	| func_call
 	;
@@ -180,7 +180,7 @@ identifier_list:
 	}
 
 assignment:
-	IDENTIFIER ASSIGN expression SEMICOLON {
+	IDENTIFIER ASSIGN expression {
 		auto* assign = new bc::AstVarAssign();
 		assign->name = *$1;
 		assign->expr = $3;
@@ -248,6 +248,7 @@ factor:
 		$$ = var;
 	}
 	| func_call
+	| assignment
 	| LPAREN expression RPAREN {
 		$$ = $2;
 	}

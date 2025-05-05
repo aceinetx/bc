@@ -52,6 +52,8 @@ bool AstFuncDef::compile(BC* bc) {
 	}
 
 	bc->scopes.pop_back();
+	while (!bc->values.empty())
+		bc->values.pop();
 
 	return true;
 }
