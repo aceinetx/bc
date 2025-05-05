@@ -6,11 +6,12 @@ using namespace bc;
 int main() {
 	BC bc = BC("b");
 	bc.input = R"(
+f(a, b){
+	return (a * b) + (a + b);
+}
+
 main(){
-	auto x, y;
-	x = 23;
-	y = 3;
-	return x * y;
+	return f(23, 3, 4);
 }
 )";
 

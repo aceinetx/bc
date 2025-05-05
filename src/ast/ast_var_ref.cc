@@ -10,6 +10,12 @@ void AstVarRef::print(int indent) const {
 }
 
 bool AstVarRef::compile(BC* bc) {
-	bc->values.push(bc->builder.CreateLoad(bc->builder.getInt32Ty(), bc->getVariable(name)->value));
+	Variable* var = bc->getVariable(name);
+	if (!var) {
+		bc->compile_error = fmt::format("undefined variable: {}", name);
+		return false;
+	}
+
+	bc->values.push(bc->builder.CreateLoad(bc->builder.getInt32Ty(), var->value));
 	return true;
 }

@@ -42,6 +42,7 @@ bc::Parser* yyget_extra(void*);
 	std::vector<bc::AstNode*>* func_list;
 	
 	std::vector<std::string>* identifier_list;
+	std::vector<bc::AstNode*>* expression_commalist;
 }
 
 %token <number> NUMBER
@@ -53,12 +54,12 @@ bc::Parser* yyget_extra(void*);
 
 %type <node> program function_definition
 %type <node> expression term factor
-%type <node> statement declaration assignment return_statement
+%type <node> statement declaration assignment return_statement func_call
 %type <stmt_list> statement_list
 %type <node> topstatement
 %type <top_stmt_list> topstatements
 %type <identifier_list> identifier_list
-
+%type <expression_commalist> expression_commalist 
 
 %left PLUS MINUS
 %left MULTIPLY DIVIDE
@@ -76,7 +77,18 @@ program:
 	;
 
 function_definition:
-	IDENTIFIER LPAREN RPAREN LBRACE statement_list RBRACE {
+	IDENTIFIER LPAREN identifier_list RPAREN LBRACE statement_list RBRACE {
+		auto* func = new bc::AstFuncDef();
+		func->name = *$1;
+		func->args = *$3;
+		for (const auto& stmt : *$6) {
+			func->children.push_back(stmt);
+		}
+		delete $6;
+		delete $3;
+		delete $1;
+		$$ = func;
+	} | IDENTIFIER LPAREN RPAREN LBRACE statement_list RBRACE {
 		auto* func = new bc::AstFuncDef();
 		func->name = *$1;
 		for (const auto& stmt : *$5) {
@@ -120,7 +132,32 @@ statement:
 	declaration
 	| assignment
 	| return_statement
+	| func_call
 	;
+
+func_call:
+	IDENTIFIER LPAREN expression_commalist RPAREN {
+		auto* node = new bc::AstFuncCall();
+		node->args = *$3;
+		node->name = *$1;
+		delete $3;
+		delete $1;
+		$$ = node;
+	} | IDENTIFIER LPAREN RPAREN {
+		auto* node = new bc::AstFuncCall();
+		node->name = *$1;
+		delete $1;
+		$$ = node;
+	}
+
+expression_commalist:
+	expression {
+		$$ = new std::vector<bc::AstNode*>();
+		$$->push_back($1);
+	} | expression_commalist COMMA expression {
+    $1->push_back($3);
+    $$ = $1;
+	}
 
 declaration:
 	AUTO identifier_list SEMICOLON {
@@ -210,6 +247,7 @@ factor:
 		delete $1;
 		$$ = var;
 	}
+	| func_call
 	| LPAREN expression RPAREN {
 		$$ = $2;
 	}

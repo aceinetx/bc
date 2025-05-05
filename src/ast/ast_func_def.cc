@@ -17,7 +17,11 @@ void AstFuncDef::print(int indent) const {
 }
 
 bool AstFuncDef::compile(BC* bc) {
-	auto type = FunctionType::get(bc->builder.getInt32Ty(), {}, false);
+	std::vector<Type*> arg_types = {};
+	for (size_t i = 0; i < args.size(); i++) {
+		arg_types.push_back(bc->builder.getInt32Ty());
+	}
+	auto type = FunctionType::get(bc->builder.getInt32Ty(), arg_types, false);
 	auto func = Function::Create(type, Function::ExternalLinkage, name, bc->fmodule);
 	auto block = BasicBlock::Create(bc->context, "_" + name, func);
 
@@ -25,12 +29,29 @@ bool AstFuncDef::compile(BC* bc) {
 
 	bc->scopes.push_back({});
 
+	auto fnArgs = func->arg_begin();
+	Value* arg = fnArgs++;
+	for (size_t i = 0; i < args.size(); i++) {
+		{
+			auto var = std::make_unique<Variable>();
+			var->name = args[i];
+			var->value = bc->builder.CreateAlloca(bc->builder.getInt32Ty(), nullptr, args[i]);
+			bc->builder.CreateStore(arg, var->value);
+
+			bc->scopes.back().variables.push_back(std::move(var));
+		}
+
+		arg = fnArgs++;
+	}
+
 	if (!AstNode::compile(bc))
 		return false;
 
 	if (!block->getTerminator()) {
 		bc->builder.CreateRet(ConstantInt::get(bc->builder.getInt32Ty(), 0));
 	}
+
+	bc->scopes.pop_back();
 
 	return true;
 }

@@ -23,6 +23,7 @@ public:
 class AstFuncDef : public AstNode {
 public:
 	std::string name;
+	std::vector<std::string> args;
 
 	void print(int indent = 0) const override;
 	bool compile(BC* bc) override;
@@ -87,6 +88,7 @@ public:
 	std::string name;
 
 	void print(int indent = 0) const override;
+	bool compile(BC* bc) override;
 
 	~AstFuncCall();
 };
